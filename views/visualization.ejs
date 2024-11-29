@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0"></script>
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7fafc;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styling */
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 20px;
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            text-align: center;
+            color: #34495e;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        /* Section Styling */
+        section {
+            max-width: 1100px;
+            margin: 40px auto;
+            background: #fff;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        section h2 {
+            font-size: 1.5rem;
+            color: #2980b9;
+        }
+
+        /* Chart Styling */
+        canvas {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: 400px; /* Increase the height of the chart */
+            border-radius: 8px;
+        }
+
+        /* Responsive Styling */
+        @media (max-width: 800px) {
+            h1, h2 {
+                font-size: 1.5rem;
+            }
+
+            section {
+                padding: 20px;
+            }
+
+            canvas {
+                height: 300px; /* Adjust the height for smaller screens */
+            }
+        }
+
+        /* Footer Styling */
+        footer {
+            background-color: #2980b9;
+            padding: 15px;
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+        }
+
+        footer a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    <h1>Scholarship Data Dashboard</h1>
+
+    <!-- Monthly Confirmed and Rejected Applications Bar Chart -->
+    <section>
+        <h2>Confirmed vs. Rejected Applications by Month</h2>
+        <canvas id="confirmedRejectedChart"></canvas>
+    </section>
+
+
+    <!-- Year Level Pie Chart -->
+    <section>
+        <h2>Year Level Distribution</h2>
+        <canvas id="yearLevelChart"></canvas>
+    </section>
+
+    <!-- Degree Program Pie Chart -->
+    <section>
+        <h2>Degree Program Distribution</h2>
+        <canvas id="degreeProgramChart"></canvas>
+    </section>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0"></script>
+    
+    <script>
+       // Data for Year Level Chart
+const yearLevelLabels = <%- JSON.stringify(yearLevelLabels) %>;
+const yearLevelData = <%- JSON.stringify(yearLevelData) %>;
+
+new Chart(document.getElementById('yearLevelChart'), {
+    type: 'pie',
+    data: {
+        labels: yearLevelLabels,
+        datasets: [{
+            label: 'Percentage of Students by Year Level',
+            data: yearLevelData,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.3)',
+                'rgba(54, 162, 235, 0.3)',
+                'rgba(255, 206, 86, 0.3)',
+                'rgba(75, 192, 192, 0.3)',
+                'rgba(153, 102, 255, 0.3)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    usePointStyle: true,
+                    boxWidth: 10,
+                    generateLabels: (chart) => {
+                        const labels = chart.data.labels;
+                        const data = chart.data.datasets[0].data;
+                        const total = data.reduce((sum, value) => sum + value, 0);
+
+                        return labels.map((label, i) => {
+                            const percentage = ((data[i] / total) * 100).toFixed(2);
+                            return {
+                                text: `${label}: ${percentage}%`, // Append percentage to label
+                                fillStyle: chart.data.datasets[0].backgroundColor[i],
+                                hidden: false,
+                                lineCap: 'round'
+                            };
+                        });
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(tooltipItem) {
+                        const total = tooltipItem.dataset.data.reduce((sum, value) => sum + value, 0);
+                        const value = tooltipItem.raw;
+                        const percentage = ((value / total) * 100).toFixed(2);
+                        return `${tooltipItem.label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Repeat for Degree Program Chart
+const degreeProgramLabels = <%- JSON.stringify(degreeProgramLabels) %>;
+const degreeProgramData = <%- JSON.stringify(degreeProgramData) %>;
+
+// Repeat the same structure for the Degree Program Chart
+new Chart(document.getElementById('degreeProgramChart'), {
+    type: 'pie',
+    data: {
+        labels: degreeProgramLabels,
+        datasets: [{
+            label: 'Percentage of Students by Degree Program',
+            data: degreeProgramData,
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.3)',
+                'rgba(54, 162, 235, 0.3)',
+                'rgba(255, 206, 86, 0.3)',
+                'rgba(75, 192, 192, 0.3)',
+                'rgba(153, 102, 255, 0.3)',
+                'rgba(255, 159, 64, 0.3)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    usePointStyle: true,
+                    boxWidth: 10,
+                    generateLabels: (chart) => {
+                        const labels = chart.data.labels;
+                        const data = chart.data.datasets[0].data;
+                        const total = data.reduce((sum, value) => sum + value, 0);
+
+                        return labels.map((label, i) => {
+                            const percentage = ((data[i] / total) * 100).toFixed(2);
+                            return {
+                                text: `${label}: ${percentage}%`,
+                                fillStyle: chart.data.datasets[0].backgroundColor[i],
+                                hidden: false,
+                                lineCap: 'round'
+                            };
+                        });
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(tooltipItem) {
+                        const total = tooltipItem.dataset.data.reduce((sum, value) => sum + value, 0);
+                        const value = tooltipItem.raw;
+                        const percentage = ((value / total) * 100).toFixed(2);
+                        return `${tooltipItem.label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+        // Fetch and render Confirmed vs. Rejected Applications Bar Chart
+        fetch('/acceptance-rate-data')
+        .then(response => response.json())
+        .then(data => {
+            const dateLabels = data.map(item => item.date);
+            const confirmedData = data.map(item => item.confirmed);
+            const rejectedData = data.map(item => item.rejected);
+
+            new Chart(document.getElementById('confirmedRejectedChart'), {
+                type: 'bar',
+                data: {
+                    labels: dateLabels,
+                    datasets: [
+                        {
+                            label: 'Confirmed Applications',
+                            data: confirmedData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.3)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Rejected Applications',
+                            data: rejectedData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.3)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Month' } },
+                        y: { 
+                            title: { display: true, text: 'Number of Applications' },
+                            beginAtZero: true 
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "admin-schotest",
+  "version": "1.0.0",
+  "description": "admin for scholarship application",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "rjay balinton",
+  "license": "ISC",
+  "dependencies": {
+    "admin-schotest": "file:",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.1",
+    "mysql2": "^3.11.3",
+    "nodemon": "^3.1.7"
+  }
+}

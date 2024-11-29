@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applications</title>
+    <style>
+        /* Styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+         /* Table Styling */
+         table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Responsive Table */
+        @media screen and (max-width: 768px) {
+            table {
+                width: 100%;
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+
+        .search-and-add-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .add-student-button {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .add-student-button:hover {
+            background-color: #218838;
+        }
+
+        .search-container input[type="text"] {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .search-container button {
+            padding: 8px 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #218838;
+        }
+
+        .show-all-button {
+            padding: 8px 12px;
+            background-color: #218838;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .show-all-button:hover {
+            background-color: #0056b3;
+        }
+
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.4); 
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; 
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .modal form {
+            display: grid;
+            gap: 15px;
+        }
+
+        .modal input, .modal select, .modal button {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .modal button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .modal button:hover {
+            background-color: #218838;
+        }
+
+        .modal label {
+            font-weight: bold;
+        }
+        /* Styling for Action Buttons */
+td .view-button, 
+td .confirm-button, 
+td .reject-button {
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s; /* Smooth hover transitions */
+    margin-left: 10px; /* Spacing between buttons */
+}
+
+td .view-button {
+    background-color: #007bff; /* Blue for View */
+    color: white;
+}
+
+td .view-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+td .confirm-button {
+    background-color: #28a745; /* Green for Confirm */
+    color: white;
+}
+
+td .confirm-button:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+td .reject-button {
+    background-color: #dc3545; /* Red for Reject */
+    color: white;
+}
+
+td .reject-button:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+/* For better alignment in table cells */
+td.action-buttons {
+    text-align: center; /* Center aligns the buttons */
+    vertical-align: middle; /* Vertically centers buttons within the cell */
+}
+
+td.action-buttons button {
+    display: inline-block; /* Ensures proper button layout */
+}
+
+    </style>
+    
+</head>
+
+<body>
+    <%- include('partials/header') %>
+    
+    <h1>Student Applications</h1>
+
+    <div class="search-and-add-container">
+        
+        <!-- Button to open "Add Student" Modal -->
+        <button onclick="openAddStudentModal()" class="add-student-button">Add Student</button>
+
+        <div class="search-container">
+            <form action="/search" method="GET" style="margin-bottom: 20px;">
+                <input type="text" name="search" placeholder="Enter Student ID or Number" required>
+                <button type="submit">Search</button>
+            </form>
+            <form action="/application" method="GET" style="display: inline;">
+                <button type="submit" class="show-all-button">Show All</button>
+            </form>
+        </div>
+        
+    </div>
+    <div>
+        <a href="/confirmed" class="show-all-button">Confirmed Students</a>
+        <a href="/rejected" class="show-all-button">Rejected Students</a>
+    </div>
+    
+
+    <!-- Modal for Adding New Student -->
+<div id="addStudentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddStudentModal()">&times;</span>
+        <h2>Add New Student</h2>
+        <form action="/addStudent" method="POST">
+            <label for="student_id">Student ID:</label>
+            <input type="text" id="student_id" name="student_id" required>
+        
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name" required>
+        
+            <label for="last_name">Last Name:</label>
+            <input type="text" id="last_name" name="last_name" required>
+        
+            <label for="middle_initial">Middle Initial:</label>
+            <input type="text" id="middle_initial" name="middle_initial">
+        
+            <label for="degree_program">Degree Program:</label>
+            <select id="degree_program" name="degree_program" required>
+                <option value="BSIT">BSIT</option>
+                <option value="BSCRIM">BSCRIM</option>
+                <option value="AB PSYCHOLOGY">AB PSYCHOLOGY</option>
+                <option value="AB ENGLISH">AB ENGLISH</option>
+                <option value="BSHM">BSHM</option>
+                <option value="BTVTED">BTVTED</option>
+                <option value="BSED">BSED</option>
+                <option value="BSED">BSTM</option>
+            </select>
+        
+            <label for="year_level">Year Level:</label>
+            <select id="year_level" name="year_level" required>
+                <option value="1">First Year</option>
+                <option value="2">Second Year</option>
+                <option value="3">Third Year</option>
+                <option value="4">Fourth Year</option>
+            </select>
+        
+            <label for="gmail">Gmail:</label>
+            <input type="email" id="gmail" name="gmail" required>
+        
+            <label for="phone_number">Phone Number:</label>
+            <input type="text" id="phone_number" name="phone_number" required>
+        
+            <label for="status_enrollment">Status:</label>
+            <label for="status_enrollment">Enrollment Status:</label>
+            <select id="status_enrollment" name="status_enrollment" required>
+            <option value="enrolled">Enrolled</option>
+            <option value="pending">Pending</option>
+            </select>
+            <label for="zip_code">Zip Code:</label>
+            <input type="text" id="zip_code" name="zip_code" required>
+        
+            <label for="enrolled_units">Enrolled Units:</label>
+            <input type="number" id="enrolled_units" name="enrolled_units" required>
+        
+            <button type="submit">Save Student</button>
+        </form>
+    </div>
+</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Student ID</th>
+                <th>Student Number</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Middle Initial</th>
+                <th>Degree Program</th>
+                <th>Year Level</th>
+                <th>Gmail</th>
+                <th>Phone Number</th>
+                <th>Status</th>
+                <th>Zip Code</th>
+                <th>Enrolled Units</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% students.forEach(student => { %>
+                <tr>
+                    <td><%= student.student_id %></td>
+                    <td><%= student.student_number %></td>
+                    <td><%= student.first_name %></td>
+                    <td><%= student.last_name %></td>
+                    <td><%= student.middle_initial || 'N/A' %></td>
+                    <td><%= student.degree_program %></td>
+                    <td><%= student.year_level %></td>
+                    <td><%= student.gmail %></td>
+                    <td><%= student.phone_number %></td>
+                    <td><%= student.status_enrollment %></td>
+                    <td><%= student.zip_code %></td>
+                    <td><%= student.enrolled_units %></td>
+                    <td>
+                        <button class="view-button" onclick="openViewModal('<%= JSON.stringify(student) %>')">View</button>
+                        <button class="confirm-button" onclick="confirmStudent('<%= student.student_id %>')">Confirm</button><p></p>
+                        <button class="reject-button" onclick="rejectStudent('<%= student.student_id %>')">Reject</button>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+    
+    <script>
+        function openAddStudentModal() {
+            document.getElementById("addStudentModal").style.display = "block";
+        }
+
+        function closeAddStudentModal(){
+            document.getElementById("addStudentModal").style.display = "none";
+        }
+
+        // Function to open the view student modal and display details
+        function openViewModal(studentData) {
+            // Parse the student data
+            const student = JSON.parse(studentData);
+
+            // Populate the modal with student details
+            let studentDetails = `
+            <style>
+                P{color: black; 
+                font-family: Arial, sans-serif; 
+                font-size: 1rem; 
+                line-height: 1.5; 
+                margin: 10px 0; 
+                word-wrap: break-word;
+                }
+            </style>
+                <p><strong>Student ID:</strong> ${student.student_id}</p>
+                <p><strong>Student Number:</strong> ${student.student_number}</p>
+                <p><strong>First Name:</strong> ${student.first_name}</p>
+                <p><strong>Last Name:</strong> ${student.last_name}</p>
+                <p><strong>Middle Initial:</strong> ${student.middle_initial || 'N/A'}</p>
+                <p><strong>Degree Program:</strong> ${student.degree_program}</p>
+                <p><strong>Year Level:</strong> ${student.year_level}</p>
+                <p><strong>Gmail:</strong> ${student.gmail}</p>
+                <p><strong>Phone Number:</strong> ${student.phone_number}</p>
+                <p><strong>Status:</strong> ${student.status_enrollment}</p>
+                <p><strong>Zip Code:</strong> ${student.zip_code}</p>
+                <p><strong>Enrolled Units:</strong> ${student.enrolled_units}</p>
+            `;
+            document.getElementById("student-details").innerHTML = studentDetails;
+
+            // Display the modal
+            document.getElementById("viewStudentModal").style.display = "block";
+        }
+
+        function closeViewModal() {
+            document.getElementById("viewStudentModal").style.display = "none";
+        }
+
+        // Function to confirm the student application
+        function confirmStudent(studentId) {
+    fetch(`/confirmStudent/${studentId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+    })
+    .then((response) => response.json())  // Expecting JSON response
+    .then((data) => {
+        if (data.success) {
+            alert(data.message);
+            location.href = '/confirmed'; // Redirect to confirmed students page
+        } else {
+            alert(data.message);  // Display error message received from backend
+        }
+    })
+    .catch(() => {
+        alert('Error confirming student.');
+    });
+}
+    function rejectStudent(studentId) {
+        fetch(`/rejectStudent/${studentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch((error) => {
+                alert('Error rejecting student.');
+            });
+    }
+    </script>
+
+    <!-- Modal for Viewing Student Details -->
+    <div id="viewStudentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeViewModal()">&times;</span>
+            <h2>Student Details</h2>
+            <div id="student-details"></div>
+        </div>
+    </div>
+</body>
+</html>
+
