@@ -1,20 +1,37 @@
 const adminModel = require('../models/adminmodel');
 
 const adminController = {
-    addPost: (req, res) => {
+    addPost: async (req, res) => {
         const { title, content } = req.body;
-        const userId = req.user?.id || 1;
-
+        const userId = req.user?.id || 1; // Use the authenticated user ID or fallback to 1
+    
+        // Validate inputs
         if (!title || !content) {
-            return res.status(400).send('Title and content are required');
+            return res.status(400).json({ error: 'Title and content are required.' });
         }
-
-        adminModel.addPost(title, content, userId)
-            .then(() => res.redirect('/'))
-            .catch(err => {
-                console.error('Database Error:', err);
-                res.status(500).send('Internal Server Error: ${err.message}');
-            });
+    
+        try {
+            // Ensure title and content meet any additional validation rules
+            if (title.length > 255) {
+                return res.status(400).json({ error: 'Title must not exceed 255 characters.' });
+            }
+    
+            // Call the model to add the post
+            await adminModel.addPost(title, content, userId);
+    
+            // Send a success response
+            res.status(201).json({ message: 'Post successfully added.' });
+        } catch (err) {
+            console.error('Error adding post:', err.message);
+    
+            // Distinguish between different types of errors if needed
+            if (err.code === 'ER_BAD_FIELD_ERROR') {
+                return res.status(400).json({ error: 'Invalid data provided.' });
+            }
+    
+            // Send a general error response for unexpected issues
+            res.status(500).json({ error: 'Internal server error. Please try again later.' });
+        }
     },
 
     home: (req, res) => {
@@ -22,19 +39,37 @@ const adminController = {
             .then(posts => res.render('home', { posts }))
             .catch(() => res.status(500).send('Database error'));
     },
+    // Fetch all posts
+  fetchPosts: (req, res) => {
+    adminModel.getPosts()  // Assuming getPosts is a function in adminModel
+      .then(posts => res.json(posts))  // Send the posts as a JSON response
+      .catch(() => res.status(500).send('Error fetching posts'));
+  },
 
     application: (req, res) => {
         adminModel.getApplicationData()
-            .then(students => res.render('application', { students }))
-            .catch(() => res.status(500).send('Database error'));
+            .then(students => {
+                res.json(students); // Send the student data as JSON
+            })
+            .catch(err => {
+                console.error("Database error:", err);
+                res.status(500).json({ error: 'Database error' }); // Send an error response as JSON
+            });
     },
 
-    search: (req, res) => {
-        const searchQuery = req.query.search;
+    search:(req, res) => {
+        const searchQuery = req.query.search;  // Make sure you use `search` instead of `query`
         adminModel.searchStudents(searchQuery)
-            .then(students => res.render('application', { students }))
-            .catch(() => res.status(500).send('Database error'));
-    },
+          .then(students => {
+            // Check if the request is expecting a JSON response
+            if (req.accepts('json')) {
+              res.json({ students });
+            } else {
+              res.render('application', { students });
+            }
+          })
+          .catch(() => res.status(500).send('Database error'));
+      },
 
     addStudent: (req, res) => {
         const newStudent = req.body;
@@ -48,86 +83,129 @@ const adminController = {
 
     getConfirmedStudents: (req, res) => {
         adminModel.getConfirmedStudents()
-            .then(students => res.render('confirmed', { students }))
-            .catch(() => res.status(500).send('Error retrieving confirmed students.'));
+            .then(students => {
+                res.json(students); // Send the student data as JSON
+            })
+            .catch(err => {
+                console.error("Error retrieving confirmed students:", err);
+                res.status(500).json({ error: 'Error retrieving confirmed students' }); // Send an error response as JSON
+            });
     },
 
     getRejectedStudents: (req, res) => {
         adminModel.getRejectedStudents()
-            .then(students => res.render('rejected', { students }))
-            .catch(() => res.status(500).send('Error retrieving rejected students.'));
+            .then(students => {
+                res.json(students); // Send the students as a JSON response
+            })
+            .catch(err => {
+                console.error('Error retrieving rejected students:', err);
+                res.status(500).json({ error: 'Error retrieving rejected students.' }); // Send an error message as JSON
+            });
     },
 
     exportConfirmedStudents: (req, res) => {
         adminModel.exportConfirmedStudents()
-        .then(filePath => {
-            res.download(filePath, 'confirmed_students.xlsx', (err) => {
-                if (err) {
-                    console.error('Error sending file:', err);
-                    res.status(500).send('Error exporting file.');
-                }
+            .then(filePath => {
+                res.json({
+                    success: true,
+                    message: 'Export successful.',
+                    filePath: filePath, // Provide the file path or a URL to access the file
+                });
+            })
+            .catch(err => {
+                console.error("Error exporting confirmed students:", err);
+                res.status(500).json({
+                    success: false,
+                    message: 'Error exporting file.',
+                    error: err.message || 'Unknown error',
+                });
             });
-        })
-        .catch(() => {
-            res.status(500).send('Error exporting file.');
-        });
     },
-    renderVisualizationPage: (req, res) => {
+    renderYearLevelData: (req, res, next) => {
         adminModel.getYearLevelData((err, yearResults) => {
             if (err) {
-                console.error('Error fetching year level data:', err);
-                return res.status(500).send('Database error');
+                console.error("Error fetching year level data:", err);
+                return res.status(500).json({
+                    success: false,
+                    message: "Error fetching year level data",
+                    error: err.message,
+                });
+            }
+            req.yearResults = yearResults; // Pass data to the next middleware
+            next();
+        });
+    },
+
+    renderDegreeProgramData: (req, res) => {
+        const yearResults = req.yearResults;
+
+        adminModel.getDegreeProgramData((err, degreeResults) => {
+            if (err) {
+                console.error("Error fetching degree program data:", err);
+                return res.status(500).json({
+                    success: false,
+                    message: "Error fetching degree program data",
+                    error: err.message,
+                });
             }
 
-            adminModel.getDegreeProgramData((err, degreeResults) => {
-                if (err) {
-                    console.error('Error fetching degree program data:', err);
-                    return res.status(500).send('Database error');
-                }
+            const totalStudents = yearResults.reduce((sum, result) => sum + result.count, 0);
 
-                const totalStudents = yearResults.reduce((sum, result) => sum + result.count, 0);
-
-                if (totalStudents === 0) {
-                    console.warn('No confirmed students found in the database');
-                    return res.render('visualization', {
-                        title: 'Data Visualization',
+            if (totalStudents === 0) {
+                console.warn("No confirmed students found in the database");
+                return res.json({
+                    success: true,
+                    message: "No data available for confirmed students",
+                    data: {
                         yearLevelLabels: [],
                         yearLevelData: [],
                         degreeProgramLabels: [],
                         degreeProgramData: [],
-                    });
-                }
+                    },
+                });
+            }
 
-                // Process data for visualization
-                const yearLevelLabels = yearResults.map(result => `${result.year_level} Year `);
-                const yearLevelData = yearResults.map(result => (result.count / totalStudents) * 100);
+            // Process data for visualization
+            const yearLevelLabels = yearResults.map(result => `${result.year_level} Year`);
+            const yearLevelData = yearResults.map(result => (result.count / totalStudents) * 100);
 
-                const degreeProgramLabels = degreeResults.map(result => result.degree_program);
-                const degreeProgramData = degreeResults.map(result => (result.count / totalStudents) * 100);
+            const degreeProgramLabels = degreeResults.map(result => result.degree_program);
+            const degreeProgramData = degreeResults.map(result => (result.count / totalStudents) * 100);
 
-                res.render('visualization', {
-                    title: 'Data Visualization (Confirmed Students)',
+            res.json({
+                success: true,
+                message: "Data fetched and processed successfully",
+                data: {
                     yearLevelLabels,
                     yearLevelData,
                     degreeProgramLabels,
                     degreeProgramData,
-                });
+                },
             });
         });
-    },renderAcceptanceVisualization: (req, res) => {
+    },
+    
+    renderAcceptanceVisualization: (req, res) => {
         adminModel.getAcceptanceRateByDate((err, results) => {
             if (err) {
                 console.error('Error fetching acceptance rate data:', err);
-                return res.status(500).send('Database error');
+                return res.status(500).json({
+                    success: false,
+                    message: 'Database error',
+                    error: err.message,
+                });
             }
     
             // Ensure `results` contains data
             if (!results || results.length === 0) {
                 console.warn('No data available for acceptance rate visualization');
-                return res.render('acceptanceVisualization', {
-                    title: 'Acceptance Rate Visualization',
-                    dateLabels: [],
-                    acceptanceRates: [],
+                return res.json({
+                    success: true,
+                    message: 'No data available for acceptance rate visualization',
+                    data: {
+                        dateLabels: [],
+                        acceptanceRates: [],
+                    },
                 });
             }
     
@@ -135,20 +213,32 @@ const adminController = {
             const dateLabels = results.map(result => result.date);
             const acceptanceRates = results.map(result => result.acceptance_rate);
     
-            // Pass data to the view
-            res.render('acceptanceVisualization', {
-                title: 'Acceptance Rate Visualization',
-                dateLabels,
-                acceptanceRates,
+            // Return data as JSON response
+            res.json({
+                success: true,
+                message: 'Acceptance rate data fetched successfully',
+                data: {
+                    dateLabels,
+                    acceptanceRates,
+                },
             });
         });
-    },getAcceptanceRateData: async (req, res) => {
+    },
+    getAcceptanceRateData: async (req, res) => {
         try {
             const results = await adminModel.fetchAcceptanceRate();
-            res.json(results);
+            res.json({
+                success: true,
+                message: "Acceptance rate data fetched successfully",
+                data: results,
+            });
         } catch (error) {
-            console.error('Error fetching acceptance rate data:', error);
-            res.status(500).send('Error fetching data');
+            console.error("Error fetching acceptance rate data:", error);
+            res.status(500).json({
+                success: false,
+                message: "Error fetching acceptance rate data",
+                error: error.message, // Optional: Include the error message for debugging
+            });
         }
     },
     

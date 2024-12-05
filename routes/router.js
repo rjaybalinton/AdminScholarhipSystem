@@ -4,6 +4,8 @@ const admin = require('../controller/admin');
 
 // Route for the home page
 router.get('/', admin.home);
+// Route for fetching all posts
+router.get('/posts', admin.fetchPosts);
 
 // Route for the application page (student applications)
 router.get('/application', admin.application);
@@ -34,7 +36,9 @@ router.get('/rejected', admin.getRejectedStudents);
 router.get('/export/confirmed-students', admin.exportConfirmedStudents);
 
 // Route for rendering the visualization page
-router.get('/visualization', admin.renderVisualizationPage);
+router.get('/year-level-data', admin.renderYearLevelData);
+// Route for rendering the visualization page
+router.get('/degree-program-data', admin.renderDegreeProgramData);
 
 // Route to fetch acceptance rate data
 router.get('/acceptance-rate-data', admin.getAcceptanceRateData);

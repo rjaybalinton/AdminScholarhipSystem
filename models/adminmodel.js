@@ -42,13 +42,16 @@ const adminModel = {
 
     searchStudents: (searchQuery) => {
         const sql = `
-            SELECT * FROM students s
-            LEFT JOIN application_status a ON s.student_id = a.student_id
-            WHERE (s.student_id = ? OR s.student_number = ?)
-            AND (a.status IS NULL OR a.status NOT IN ('confirmed', 'rejected'))
+            SELECT *
+            FROM students
+            WHERE 
+                student_id = ? OR
+                student_number = ? OR
+                last_name LIKE CONCAT('%', ?, '%') OR
+                first_name LIKE CONCAT('%', ?, '%')
         `;
         return new Promise((resolve, reject) => {
-            db.query(sql, [searchQuery, searchQuery], (err, results) => {
+            db.query(sql, [searchQuery, searchQuery, searchQuery, searchQuery], (err, results) => {
                 if (err) reject(err);
                 resolve(results);
             });
